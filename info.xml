@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <extension key="biz.jmaconsulting.chmosaicotemplate" type="module">
   <file>chmosaicotemplate</file>
-  <name>FIXME</name>
-  <description>FIXME</description>
+  <name>CanadaHelps Mosaico Template</name>
+  <description>This module provides a new base template for use by Canada Helps with Mosaico Mailings</description>
   <license>AGPL-3.0</license>
   <maintainer>
     <author>Seamus Lee</author>
@@ -20,7 +20,7 @@
   <compatibility>
     <ver>5.0</ver>
   </compatibility>
-  <comments>This module provides a new base template for usage by Canada Helps with Mosaico Mailings</comments>
+  <comments>This module provides a new base template for use by Canada Helps with Mosaico Mailings</comments>
   <classloader>
     <psr4 prefix="Civi\" path="Civi"/>
   </classloader>
