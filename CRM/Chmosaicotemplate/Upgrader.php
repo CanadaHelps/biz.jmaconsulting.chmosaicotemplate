@@ -163,11 +163,11 @@ class CRM_Chmosaicotemplate_Upgrader extends CRM_Chmosaicotemplate_Upgrader_Base
     $thankYouTemplate = civicrm_api3('MessageTemplate', 'get', [
       'msg_title' => 'Basic - Thank You Email',
     ]);
-    //Replacing (contact.first_name) (contact.last_name) token with (contact.display_name) for "Basic - Thank You Email" message template 
+    //Replacing (contact.first_name) (contact.last_name) token with (contact.display_name) for "Basic - Thank You Email" message template
     if (!empty($thankYouTemplate['values'])) {
       foreach ($thankYouTemplate['values'] as $templateContent) {
         $updatedMsgHtml = str_replace("{contact.first_name} {contact.last_name}", "{contact.display_name}", $templateContent['msg_html'], $replaceCount);
-        if($replaceCount>0){      
+        if($replaceCount>0){
           civicrm_api3('MessageTemplate', 'create', [
             'msg_html' => $updatedMsgHtml,
             'id' => $templateContent['id'],
@@ -188,6 +188,17 @@ class CRM_Chmosaicotemplate_Upgrader extends CRM_Chmosaicotemplate_Upgrader_Base
       'msg_html' => $msg_html,
       'is_reserved' => 0,
     ]);
+  }
+
+  public function upgrade_1206() {
+    $this->ctx->log->info('CRM-1069: DMS - Correct Mosaico Template entries with non-existent msg_tpl_id');
+    CRM_Core_DAO::executeQuery(
+      "UPDATE civicrm_mosaico_template
+      SET msg_tpl_id = NULL
+      WHERE msg_tpl_id NOT IN ( SELECT id FROM civicrm_msg_template )"
+    );
+
+   return TRUE;
   }
 
 
