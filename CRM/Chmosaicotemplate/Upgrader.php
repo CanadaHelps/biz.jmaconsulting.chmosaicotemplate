@@ -200,7 +200,22 @@ class CRM_Chmosaicotemplate_Upgrader extends CRM_Chmosaicotemplate_Upgrader_Base
 
    return TRUE;
   }
-
+  public function upgrade_1221() {
+    $this->ctx->log->info('CRM-1748: fix template paths');
+    $template = CRM_Core_DAO::executeQuery("SELECT metadata, id from `civicrm_mosaico_template`");
+    while ($template->fetch()) {
+      $metadata = json_decode($template->metadata, TRUE);
+      if (preg_match('/^vendor\/civicrm\/zz-canadahelps\/biz.jmaconsulting.chmosaicotemplate\/.+/', $metadata['template'])) {
+        $metadata['template'] = str_replace(
+          'vendor/civicrm/zz-canadahelps/biz.jmaconsulting.chmosaicotemplate/',
+          '/vendor/civicrm/zz-canadahelps/biz.jmaconsulting.chmosaicotemplate/',
+          $metadata['template']);
+        $updated_metavalue = json_encode($metadata);
+        CRM_Core_DAO::executeQuery(sprintf("UPDATE civicrm_mosaico_template SET metadata = '%s' WHERE id = %s ", $updated_metavalue, $template->id));
+      }
+    }
+    return TRUE;
+  }
 
   /**
    * Example: Run an external SQL script.
