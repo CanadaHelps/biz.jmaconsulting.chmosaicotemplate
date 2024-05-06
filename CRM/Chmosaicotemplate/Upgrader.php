@@ -235,5 +235,16 @@ class CRM_Chmosaicotemplate_Upgrader extends CRM_Chmosaicotemplate_Upgrader_Base
     return TRUE;
   }
 
+  public function upgrade_13002() {
+    $this->ctx->log->info('Update domainId to display all eligibile mosaico templates to users');
+    $domainID = CRM_Core_Config::domainID();
+    // Update domain_id as mosaico API has condition that domain_id should match with current domain_id
+    $sql = "UPDATE civicrm_mosaico_template SET domain_id = $domainID
+    WHERE domain_id IS NULL";
+    CRM_Core_DAO::executeQuery($sql);
+
+    return TRUE;
+  }
+
 
 }
