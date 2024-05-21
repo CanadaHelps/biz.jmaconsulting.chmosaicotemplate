@@ -8,6 +8,7 @@ class CRM_Chmosaicotemplate_TemplateWrapper implements API_Wrapper {
 
   public function toApiOutput($apiRequest, $result) {
     foreach ($result['values'] as $key => $res) {
+      $metadata = [];
       if (isset($res['metadata'])) {
         $metadata = json_decode($res['metadata'], TRUE);
         if ($res['title'] == 'Basic - Email With Gallery') {
