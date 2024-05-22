@@ -7,10 +7,9 @@ class CRM_Chmosaicotemplate_TemplateWrapper implements API_Wrapper {
   }
 
   public function toApiOutput($apiRequest, $result) {
-    $loopResult = is_array($result) ? $result['values'] : $result; // hand both api3 and api4
+    $values = is_array($result) ? $result['values'] : $result->getArrayCopy(); // hand both api3 and api4
 
-    foreach ($loopResult as $index => $template) {
-      $metadata = [];
+    foreach ($values as $index => $template) {
       if (isset($template['metadata'])) {
         $metadata = json_decode($template['metadata'], TRUE);
         if ($template['title'] == 'Basic - Email With Gallery') {
@@ -28,13 +27,14 @@ class CRM_Chmosaicotemplate_TemplateWrapper implements API_Wrapper {
         elseif ($template['title'] == 'Basic - Thank You Email') {
           $metadata['thumbnail'] = '/vendor/civicrm/zz-canadahelps/biz.jmaconsulting.chmosaicotemplate/chtemplate/thumbnails/Basic%20-%20Thank%20You%20Email.jpg';
         }
+        $values[$index]['metadata'] = json_encode($metadata);
       }
-      $loopResult[$index]['metadata'] = json_encode($metadata);
     }
+
     if ( is_array($result)  ) {
-      $result['values'] = $loopResult;
+      $result['values'] = $values;
     } else {
-      $result = $loopResult;
+      $result->exchangeArray($values);
     }
     return $result;
   }
