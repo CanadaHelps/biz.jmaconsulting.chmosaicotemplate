@@ -6,55 +6,6 @@ use CRM_Chmosaicotemplate_ExtensionUtil as E;
  */
 class CRM_Chmosaicotemplate_Upgrader extends CRM_Chmosaicotemplate_Upgrader_Base {
 
-  // By convention, functions that look like "function upgrade_NNNN()" are
-  // upgrade tasks. They are executed in order (like Drupal's hook_update_N).
-
-  /**
-   * Example: Run an external SQL script when the module is installed.
-   *
-  public function install() {
-    $this->executeSqlFile('sql/myinstall.sql');
-  }
-
-  /**
-   * Example: Work with entities usually not available during the install step.
-   *
-   * This method can be used for any post-install tasks. For example, if a step
-   * of your installation depends on accessing an entity that is itself
-   * created during the installation (e.g., a setting or a managed entity), do
-   * so here to avoid order of operation problems.
-   *
-  public function postInstall() {
-    $customFieldId = civicrm_api3('CustomField', 'getvalue', array(
-      'return' => array("id"),
-      'name' => "customFieldCreatedViaManagedHook",
-    ));
-    civicrm_api3('Setting', 'create', array(
-      'myWeirdFieldSetting' => array('id' => $customFieldId, 'weirdness' => 1),
-    ));
-  }
-
-  /**
-   * Example: Run an external SQL script when the module is uninstalled.
-   *
-  public function uninstall() {
-   $this->executeSqlFile('sql/myuninstall.sql');
-  }
-
-  /**
-   * Example: Run a simple query when a module is enabled.
-   *
-  public function enable() {
-    CRM_Core_DAO::executeQuery('UPDATE foo SET is_active = 1 WHERE bar = "whiz"');
-  }
-
-  /**
-   * Example: Run a simple query when a module is disabled.
-   *
-  public function disable() {
-    CRM_Core_DAO::executeQuery('UPDATE foo SET is_active = 0 WHERE bar = "whiz"');
-  }
-
   /**
    * Perform Cleanup routine
    */
@@ -243,6 +194,26 @@ class CRM_Chmosaicotemplate_Upgrader extends CRM_Chmosaicotemplate_Upgrader_Base
     WHERE domain_id IS NULL";
     CRM_Core_DAO::executeQuery($sql);
 
+    return TRUE;
+  }
+
+  public function upgrade_13003() {
+    $this->ctx->log->info('Fix template paths');
+    $template = CRM_Core_DAO::executeQuery("SELECT id, html, content from `civicrm_mosaico_template`");
+    while ($template->fetch()) {
+      $htmlContent = $template->html;
+      $content = $template->content;
+      $htmlContent = str_replace('vendor/civicrm/canadahelps/', 'vendor/civicrm/zz-canadahelps/', $htmlContent);
+      $content = str_replace('vendor/civicrm/canadahelps/', 'vendor/civicrm/zz-canadahelps/', $content);
+      
+      CRM_Core_DAO::executeQuery('
+        UPDATE civicrm_mosaico_template SET html = "%1", content = "%2" WHERE id = %3
+      ', [
+        1 => [$htmlContent, 'Text'],
+        2 => [$content, 'Text'],
+        3 => [$template->id, 'Int'],
+      ]);
+    }
     return TRUE;
   }
 
