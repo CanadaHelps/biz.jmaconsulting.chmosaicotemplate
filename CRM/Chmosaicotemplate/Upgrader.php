@@ -218,4 +218,26 @@ class CRM_Chmosaicotemplate_Upgrader extends CRM_Chmosaicotemplate_Upgrader_Base
   }
 
 
+
+  public function upgrade_13004() {
+    $this->ctx->log->info('Fix template paths');
+    $template = CRM_Core_DAO::executeQuery("SELECT id, body_html, body_text from `civicrm_mailing`");
+    while ($template->fetch()) {
+      $htmlContent = $template->body_html;
+      $content = $template->body_text;
+      $htmlContent = str_replace('vendor/civicrm/canadahelps/', 'vendor/civicrm/zz-canadahelps/', $htmlContent);
+      $content = str_replace('vendor/civicrm/canadahelps/', 'vendor/civicrm/zz-canadahelps/', $content);
+      
+      CRM_Core_DAO::executeQuery('
+        UPDATE civicrm_mailing SET body_html = "%1", body_text = "%2" WHERE id = %3
+      ', [
+        1 => [$htmlContent, 'Text'],
+        2 => [$content, 'Text'],
+        3 => [$template->id, 'Int'],
+      ]);
+    }
+    return TRUE;
+  }
+
+
 }
