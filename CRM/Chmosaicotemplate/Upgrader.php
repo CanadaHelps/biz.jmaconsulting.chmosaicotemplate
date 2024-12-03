@@ -221,7 +221,7 @@ class CRM_Chmosaicotemplate_Upgrader extends CRM_Chmosaicotemplate_Upgrader_Base
 
   public function upgrade_13004() {
     $this->ctx->log->info('Fix template paths');
-    $template = CRM_Core_DAO::executeQuery("SELECT id, body_html, body_text from `civicrm_mailing`");
+    $template = CRM_Core_DAO::executeQuery("SELECT id, body_html, body_text from `civicrm_mailing` WHERE body_html like '%vendor%'");
     while ($template->fetch()) {
       $htmlContent = $template->body_html;
       $content = $template->body_text;
