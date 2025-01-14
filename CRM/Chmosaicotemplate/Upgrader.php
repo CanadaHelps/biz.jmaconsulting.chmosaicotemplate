@@ -221,7 +221,16 @@ class CRM_Chmosaicotemplate_Upgrader extends CRM_Chmosaicotemplate_Upgrader_Base
 
   public function upgrade_13004() {
     $this->ctx->log->info('Fix template paths');
-    $template = CRM_Core_DAO::executeQuery("SELECT id, body_html, body_text from `civicrm_mailing` WHERE body_html like '%vendor%'");
+    return TRUE;
+  }
+
+  public function upgrade_13005() {
+    $this->ctx->log->info('Fix template paths');
+    
+    // replace old paths in body
+    // doing this one separately as it can be resource consuming, 
+    // and tweaked the query to only look for bad paths, and not loop through all mailing
+    $template = CRM_Core_DAO::executeQuery("SELECT id, body_html, body_text from `civicrm_mailing` WHERE body_html like '%vendor/civicrm/canadahelps%'");
     while ($template->fetch()) {
       $htmlContent = $template->body_html;
       $content = $template->body_text;
@@ -235,6 +244,50 @@ class CRM_Chmosaicotemplate_Upgrader extends CRM_Chmosaicotemplate_Upgrader_Base
         2 => [$content, 'Text'],
         3 => [$template->id, 'Int'],
       ]);
+    }
+
+    // replace old paths in template options
+    // lookup text is 'vendor\/civicrm\/canadahelps'
+    // -> escaped query is "LIKE '%vendor\\\\/civicrm\\\\/canadahelps%'"
+    // -> escaped query variable in PHP requires additional backslahes  
+    $query = "SELECT id, template_options from `civicrm_mailing` WHERE template_options like '%vendor\\\\\\\/civicrm\\\\\\\/canadahelps%'";
+    $template = CRM_Core_DAO::executeQuery($query);
+    while ($template->fetch()) {
+      $template_options = json_decode($template->template_options, TRUE);
+      
+      $metadata = json_decode($template_options['mosaicoMetadata'], TRUE);
+      $content = $template_options['mosaicoContent'];
+      $updated  = FALSE;
+      if (stripos($metadata['template'], 'vendor/civicrm/canadahelps/') 
+        || stripos($metadata['thumbnail'], 'vendor/civicrm/canadahelps/') 
+        || stripos($content, 'vendor/civicrm/canadahelps/') ) {
+        $metadata['template'] = str_replace('vendor/civicrm/canadahelps/', 'vendor/civicrm/zz-canadahelps/', $metadata['template']);
+        $metadata['thumbnail'] = str_replace('vendor/civicrm/canadahelps/', 'vendor/civicrm/zz-canadahelps/', $metadata['thumbnail']);
+        $content = str_replace('vendor/civicrm/canadahelps/', 'vendor/civicrm/zz-canadahelps/', $content);
+        $updated = TRUE;
+      }
+
+      if (stripos($metadata['template'], '//vendor') 
+        || stripos($metadata['thumbnail'], '//vendor') ) {
+          $metadata['template'] = str_replace('//vendor/', '/vendor/', $metadata['template']);
+          $metadata['thumbnail'] = str_replace('//vendor/', '/vendor/', $metadata['thumbnail']);
+          $updated = TRUE;
+      }
+
+      if ($updated) {
+        $template_options['mosaicoMetadata'] = json_encode($metadata);
+        $template_options['mosaicoContent'] = $content;
+        $template_options = json_encode($template_options);
+
+        watchdog("debug", "Upgrader: updated paths for mailing #" . $template->id, [], WATCHDOG_DEBUG);
+
+        CRM_Core_DAO::executeQuery('
+        UPDATE civicrm_mailing SET template_options = "%1" WHERE id = %2
+        ', [
+          1 => [$template_options, 'Text'],
+          2 => [$template->id, 'Int'],
+        ]);
+      }
     }
     return TRUE;
   }
